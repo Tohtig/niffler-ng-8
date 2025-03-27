@@ -17,21 +17,23 @@ public class SpendingTest {
   private static final Config CFG = Config.getInstance();
 
   @Spend(
-      username = "duck",
-      category = "Обучение",
-      description = "Обучение Niffler 2.0",
-      amount = 89000.00,
-      currency = CurrencyValues.RUB
+          username = "duck",
+          category = "Обучение",
+          description = "Обучение Advanced 2.0",
+          amount = 79990,
+          currency = CurrencyValues.RUB
   )
   @Test
-  void spendingDescriptionShouldBeUpdatedByTableAction(SpendJson spend) {
-    final String newDescription = "Обучение Niffler NG";
+  void categoryDescriptionShouldBeChangedFromTable(SpendJson spend) {
+    final String newDescription = "Обучение Niffler Next Generation";
 
     Selenide.open(CFG.frontUrl(), LoginPage.class)
-        .doLogin("duck", "12345")
-        .editSpending(spend.description())
-        .editDescription(newDescription);
+            .login("duck", "12345")
+            .editSpending(spend.description())
+            .setNewSpendingDescription(newDescription)
+            .save();
 
-    new MainPage().checkThatTableContains(newDescription);
+    new MainPage().checkThatTableContainsSpending(newDescription);
   }
 }
+
