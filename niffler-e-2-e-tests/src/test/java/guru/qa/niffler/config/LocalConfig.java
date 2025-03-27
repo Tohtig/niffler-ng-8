@@ -9,6 +9,11 @@ enum LocalConfig implements Config {
   }
 
   @Override
+  public String profileUrl() {
+    return frontUrl() + "profile";
+  }
+
+  @Override
   public String spendUrl() {
     return "http://127.0.0.1:8093/";
   }
