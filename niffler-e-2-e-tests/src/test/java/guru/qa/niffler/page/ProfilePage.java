@@ -1,45 +1,62 @@
 package guru.qa.niffler.page;
 
+import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 
-import static com.codeborne.selenide.Condition.text;
-import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.$$;
 
 public class ProfilePage {
-    // Элемент для поля username (только для отображения)
-    private final SelenideElement usernameInput = $("input[name='username']");
 
-    // Элемент для поля name
-    private final SelenideElement nameInput = $("input[name='name']");
 
-    // Элемент для кнопки сохранения изменений
-    private final SelenideElement saveButton = $("button[type='submit']");
+    // Локатор для тоггла
+    private final SelenideElement showArchivedCategoriesToggle = $("input.MuiSwitch-input");
 
-    // Элемент для загрузки нового фото (кнопка, связанная с input[type='file'])
-    private final SelenideElement uploadPictureButton = $("label[for='image__input']");
+    // Локатор для категорий
+    private final ElementsCollection categoryLabels = $$(".MuiChip-label");
 
-    // Метод для получения значения поля username
-    public String getUsername() {
-        return usernameInput.shouldBe(visible).getValue();
+    /**
+     * Проверяет, включен ли тоггл отображения архивных категорий
+     *
+     * @return true, если тоггл включен
+     */
+    public boolean isArchivedCategoriesVisible() {
+        // Получаем родительский элемент тоггла и проверяем наличие класса Mui-checked
+        return showArchivedCategoriesToggle.parent().has(cssClass("Mui-checked"));
     }
 
-    // Метод для ввода нового имени
-    public ProfilePage setName(String newName) {
-        nameInput.shouldBe(visible).clear();
-        nameInput.setValue(newName);
+    /**
+     * Проверяет наличие категории с указанным именем на странице
+     *
+     * @param categoryName название категории для проверки
+     * @return true, если категория найдена
+     */
+    public boolean isCategoryPresent(String categoryName) {
+        return categoryLabels.stream()
+                .anyMatch(element -> element.shouldBe(visible).has(text(categoryName)));
+    }
+
+    /**
+     * Устанавливает тоггл отображения архивных категорий в определенное состояние
+     *
+     * @param shouldBeEnabled true - включить отображение архивных категорий, false - выключить
+     * @return текущий экземпляр страницы
+     */
+    public ProfilePage setArchivedCategoriesVisibility(boolean shouldBeEnabled) {
+        boolean currentState = isArchivedCategoriesVisible();
+
+        // Переключаем тоггл только если его текущее состояние не соответствует желаемому
+        if (currentState != shouldBeEnabled) {
+            toggleArchivedCategories();
+        }
+
         return this;
     }
 
-    // Метод для нажатия на кнопку сохранения изменений
-    public ProfilePage clickSaveChanges() {
-        saveButton.shouldBe(visible).click();
-        return this;
-    }
-
-    // Метод для запуска диалога загрузки нового фото (если понадобится)
-    public ProfilePage clickUploadPicture() {
-        uploadPictureButton.shouldBe(visible).click();
+    // Метод для переключения отображения архивных категорий
+    private ProfilePage toggleArchivedCategories() {
+        showArchivedCategoriesToggle.click();
         return this;
     }
 }
