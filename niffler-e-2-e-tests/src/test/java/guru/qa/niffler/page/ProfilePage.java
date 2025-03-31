@@ -17,24 +17,35 @@ public class ProfilePage {
     private final ElementsCollection categoryLabels = $$(".MuiChip-label");
 
     /**
-     * Проверяет, включен ли тоггл отображения архивных категорий
+     * Проверяет, что тоггл отображения архивных категорий включен
      *
-     * @return true, если тоггл включен
+     * @return текущий экземпляр страницы
      */
-    public boolean isArchivedCategoriesVisible() {
-        // Получаем родительский элемент тоггла и проверяем наличие класса Mui-checked
-        return showArchivedCategoriesToggle.parent().has(cssClass("Mui-checked"));
+    public ProfilePage checkArchivedCategoriesVisible() {
+        showArchivedCategoriesToggle.parent().shouldHave(cssClass("Mui-checked"));
+        return this;
     }
 
     /**
      * Проверяет наличие категории с указанным именем на странице
      *
      * @param categoryName название категории для проверки
-     * @return true, если категория найдена
+     * @return текущий экземпляр страницы
      */
-    public boolean isCategoryPresent(String categoryName) {
-        return categoryLabels.stream()
-                .anyMatch(element -> element.shouldBe(visible).has(text(categoryName)));
+    public ProfilePage checkCategoryPresent(String categoryName) {
+        categoryLabels.findBy(text(categoryName)).shouldBe(visible);
+        return this;
+    }
+
+    /**
+     * Проверяет отсутствие категории с указанным именем на странице
+     *
+     * @param categoryName название категории для проверки
+     * @return текущий экземпляр страницы
+     */
+    public ProfilePage checkCategoryNotPresent(String categoryName) {
+        categoryLabels.findBy(text(categoryName)).shouldNotBe(visible);
+        return this;
     }
 
     /**
@@ -44,13 +55,17 @@ public class ProfilePage {
      * @return текущий экземпляр страницы
      */
     public ProfilePage setArchivedCategoriesVisibility(boolean shouldBeEnabled) {
-        boolean currentState = isArchivedCategoriesVisible();
-
-        // Переключаем тоггл только если его текущее состояние не соответствует желаемому
-        if (currentState != shouldBeEnabled) {
-            toggleArchivedCategories();
+        if (shouldBeEnabled) {
+            if (!showArchivedCategoriesToggle.parent().has(cssClass("Mui-checked"))) {
+                showArchivedCategoriesToggle.click();
+                checkArchivedCategoriesVisible();
+            }
+        } else {
+            if (showArchivedCategoriesToggle.parent().has(cssClass("Mui-checked"))) {
+                showArchivedCategoriesToggle.click();
+                showArchivedCategoriesToggle.parent().shouldNotHave(cssClass("Mui-checked"));
+            }
         }
-
         return this;
     }
 
