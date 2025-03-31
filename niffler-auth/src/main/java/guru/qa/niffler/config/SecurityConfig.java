@@ -50,6 +50,7 @@ public class SecurityConfig {
                 antMatcher("/images/**"),
                 antMatcher("/styles/**"),
                 antMatcher("/fonts/**"),
+                antMatcher("/.well-known/**"),
                 antMatcher("/actuator/health")
             ).permitAll()
             .anyRequest()
