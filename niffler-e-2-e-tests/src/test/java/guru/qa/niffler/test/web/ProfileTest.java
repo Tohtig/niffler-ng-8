@@ -21,7 +21,6 @@ public class ProfileTest {
             username = "duck",
             archived = true
     )
-    @Disabled
     @Test
     void archivedCategoryShouldPresentInCategoriesList(CategoryJson category) {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
@@ -42,7 +41,6 @@ public class ProfileTest {
             username = "duck",
             archived = false
     )
-    @Disabled
     @Test
     void activeCategoryShouldPresentInCategoriesList(CategoryJson category) {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
@@ -52,23 +50,5 @@ public class ProfileTest {
         // Выключаем отображение архивных и проверяем видимость активной категории
         profilePage.setArchivedCategoriesVisibility(false)
                 .checkCategoryPresent(category.name());
-    }
-
-    @Test
-    void testWithEmptyUser0(@UserType(empty = true) StaticUser user) throws InterruptedException {
-        Thread.sleep(1000);
-        System.out.println(user);
-    }
-
-    @Test
-    void testWithEmptyUser1(@UserType(empty = false) StaticUser user) throws InterruptedException {
-        Thread.sleep(1000);
-        System.out.println(user);
-    }
-
-    @Test
-    void testWithEmptyUser2(@UserType(empty = false) StaticUser user) throws InterruptedException {
-        Thread.sleep(1000);
-        System.out.println(user);
     }
 }

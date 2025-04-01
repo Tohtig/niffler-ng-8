@@ -25,45 +25,69 @@ public class UsersQueueExtension implements
 
   public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UsersQueueExtension.class);
 
-  public record StaticUser(String username, String password, boolean empty) {
+  public enum Type {
+    EMPTY,
+    WITH_FRIEND,
+    WITH_INCOME_REQUEST,
+    WITH_OUTCOME_REQUEST
+  }
+
+  public record StaticUser(
+          String username,
+          String password,
+          String friend,         // друг (если есть)
+          String income,         // входящий запрос
+          String outcome         // исходящий запрос
+  ) {
   }
 
   private static final Queue<StaticUser> EMPTY_USERS = new ConcurrentLinkedQueue<>();
-  private static final Queue<StaticUser> NOT_EMPTY_USERS = new ConcurrentLinkedQueue<>();
+  private static final Queue<StaticUser> WITH_FRIEND_USERS = new ConcurrentLinkedQueue<>();
+  private static final Queue<StaticUser> WITH_INCOME_REQUEST_USERS = new ConcurrentLinkedQueue<>();
+  private static final Queue<StaticUser> WITH_OUTCOME_REQUEST_USERS = new ConcurrentLinkedQueue<>();
 
   static {
-    EMPTY_USERS.add(new StaticUser("bee", "12345", true));
-    NOT_EMPTY_USERS.add(new StaticUser("duck", "12345", false));
-    NOT_EMPTY_USERS.add(new StaticUser("dima", "12345", false));
+    EMPTY_USERS.add(new StaticUser("bee", "12345", null, null, null));
+    WITH_FRIEND_USERS.add(new StaticUser("duck", "12345", "dima", null, null));
+    WITH_INCOME_REQUEST_USERS.add(new StaticUser("dima", "12345", null, "bee", null));
+    WITH_OUTCOME_REQUEST_USERS.add(new StaticUser("barsik", "12345", null, null, "bill"));
   }
 
   @Target(ElementType.PARAMETER)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface UserType {
-    boolean empty() default true;
+    Type value() default Type.EMPTY;
   }
 
   @Override
   public void beforeTestExecution(ExtensionContext context) {
-    // Создаем или получаем существующую HashMap для хранения пользователей
-    Map<UserType, StaticUser> userMap = (Map<UserType, StaticUser>) context.getStore(NAMESPACE)
+    // Создаем или получаем HashMap для хранения пользователей
+    // Приведение типов безопасно, и предупреждение будет подавлено. В данном случае это оправдано, так как метод
+    // getOrComputeIfAbsent возвращает именно тот объект, который мы создаем в лямбда-выражении.
+    @SuppressWarnings("unchecked")
+    Map<Type, StaticUser> userMap = (Map<Type, StaticUser>) context.getStore(NAMESPACE)
             .getOrComputeIfAbsent(
                     context.getUniqueId(),
                     key -> new HashMap<>()
             );
+
     // Обрабатываем все параметры с аннотацией @UserType
     Arrays.stream(context.getRequiredTestMethod().getParameters())
             .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class))
             .forEach(parameter -> {
               UserType ut = parameter.getAnnotation(UserType.class);
+              Type type = ut.value();
               Optional<StaticUser> user = Optional.empty();
               StopWatch sw = StopWatch.createStarted();
 
-              // Ждем до 30 секунд, пытаясь получить пользователя из очереди
+              // Ждем до 30 секунд, пытаясь получить пользователя из соответствующей очереди
               while (user.isEmpty() && sw.getTime(TimeUnit.SECONDS) < 30) {
-                user = ut.empty()
-                        ? Optional.ofNullable(EMPTY_USERS.poll())
-                        : Optional.ofNullable(NOT_EMPTY_USERS.poll());
+                user = switch (type) {
+                  case EMPTY -> Optional.ofNullable(EMPTY_USERS.poll());
+                  case WITH_FRIEND -> Optional.ofNullable(WITH_FRIEND_USERS.poll());
+                  case WITH_INCOME_REQUEST -> Optional.ofNullable(WITH_INCOME_REQUEST_USERS.poll());
+                  case WITH_OUTCOME_REQUEST -> Optional.ofNullable(WITH_OUTCOME_REQUEST_USERS.poll());
+                };
               }
 
               Allure.getLifecycle().updateTestCase(testCase ->
@@ -71,30 +95,34 @@ public class UsersQueueExtension implements
               );
 
               if (user.isEmpty()) {
-                throw new IllegalStateException("Не удалось получить пользователя после 30 секунд ожидания.");
+                throw new IllegalStateException("Не удалось получить пользователя типа " + type + " после 30 секунд ожидания.");
               }
 
-              // Сохраняем пользователя в HashMap с ключом UserType
-              userMap.put(ut, user.get());
+              // Сохраняем пользователя в HashMap с ключом Type
+              userMap.put(type, user.get());
             });
   }
 
   @Override
   public void afterTestExecution(ExtensionContext context) {
     // Получаем HashMap с пользователями
-    Map<UserType, StaticUser> map = context.getStore(NAMESPACE).get(
+    @SuppressWarnings("unchecked")
+    Map<Type, StaticUser> map = (Map<Type, StaticUser>) context.getStore(NAMESPACE).get(
             context.getUniqueId(),
             Map.class
     );
 
     if (map != null) {
       // Возвращаем всех пользователей в соответствующие очереди
-      for (Map.Entry<UserType, StaticUser> entry : map.entrySet()) {
+      for (Map.Entry<Type, StaticUser> entry : map.entrySet()) {
+        Type type = entry.getKey();
         StaticUser user = entry.getValue();
-        if (user.empty()) {
-          EMPTY_USERS.add(user);
-        } else {
-          NOT_EMPTY_USERS.add(user);
+
+        switch (type) {
+          case EMPTY -> EMPTY_USERS.add(user);
+          case WITH_FRIEND -> WITH_FRIEND_USERS.add(user);
+          case WITH_INCOME_REQUEST -> WITH_INCOME_REQUEST_USERS.add(user);
+          case WITH_OUTCOME_REQUEST -> WITH_OUTCOME_REQUEST_USERS.add(user);
         }
       }
 
@@ -112,15 +140,18 @@ public class UsersQueueExtension implements
   @Override
   public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
     UserType ut = parameterContext.getParameter().getAnnotation(UserType.class);
-    Map<UserType, StaticUser> map = extensionContext.getStore(NAMESPACE).get(
+    Type type = ut.value();
+
+    @SuppressWarnings("unchecked")
+    Map<Type, StaticUser> map = extensionContext.getStore(NAMESPACE).get(
             extensionContext.getUniqueId(),
             Map.class
     );
 
-    // Получаем пользователя из HashMap по аннотации UserType
-    StaticUser user = map.get(ut);
+    // Получаем пользователя из HashMap по типу
+    StaticUser user = map.get(type);
     if (user == null) {
-      throw new ParameterResolutionException("Пользователь не найден для параметра с аннотацией " + ut);
+      throw new ParameterResolutionException("Пользователь не найден для типа " + type);
     }
 
     return user;
