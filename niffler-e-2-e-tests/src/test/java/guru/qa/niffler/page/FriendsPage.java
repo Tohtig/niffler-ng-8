@@ -12,7 +12,6 @@ public class FriendsPage {
   // Локаторы для вкладок
   private final SelenideElement friendsTab = $("a[href*='/people/friends']");
   private final SelenideElement allPeopleTab = $("a[href*='/people/all']");
-  private final SelenideElement invitationsTab = $("a[href*='/people/invitations']");
 
   // Локаторы для списков
   private final ElementsCollection friendsList = $$("#friends tr");
