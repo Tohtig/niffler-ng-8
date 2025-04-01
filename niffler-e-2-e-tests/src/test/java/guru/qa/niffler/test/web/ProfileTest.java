@@ -7,11 +7,8 @@ import guru.qa.niffler.jupiter.extension.UsersQueueExtension;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.page.LoginPage;
 import guru.qa.niffler.page.ProfilePage;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import static guru.qa.niffler.jupiter.extension.UsersQueueExtension.*;
 
 @ExtendWith(UsersQueueExtension.class)
 public class ProfileTest {

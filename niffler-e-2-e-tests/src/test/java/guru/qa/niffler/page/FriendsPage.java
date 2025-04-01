@@ -16,9 +16,7 @@ public class FriendsPage {
 
   // Локаторы для списков
   private final ElementsCollection friendsList = $$("#friends tr");
-  private final ElementsCollection peopleList = $$("table tbody#all tr");
   private final ElementsCollection incomingRequestsList = $$("#requests tr");
-  private final ElementsCollection outgoingRequestsList = $$("#outgoing-invitations tr");
 
   public FriendsPage() {
     // Проверка загрузки страницы
@@ -33,11 +31,6 @@ public class FriendsPage {
 
   public FriendsPage openAllPeopleTab() {
     allPeopleTab.click();
-    return this;
-  }
-
-  public FriendsPage openInvitationsTab() {
-    invitationsTab.click();
     return this;
   }
 
@@ -65,13 +58,6 @@ public class FriendsPage {
     // Ищем элемент с именем пользователя и статусом "Waiting..."
     $$("tr").findBy(Condition.text(username))
             .shouldHave(Condition.text("Waiting..."));
-    /*
-    // Находим строку таблицы, содержащую имя пользователя
-    peopleList.findBy(Condition.text(username))
-            .find("div.MuiChip-root")
-            .shouldHave(Condition.text("Waiting..."));
-
-     */
     return this;
   }
 }
