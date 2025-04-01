@@ -15,40 +15,40 @@ import java.util.Date;
 
 public class SpendingExtension implements BeforeEachCallback, ParameterResolver {
 
-  public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(SpendingExtension.class);
-  private final SpendApiClient spendApiClient = new SpendApiClient();
+    public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(SpendingExtension.class);
+    private final SpendApiClient spendApiClient = new SpendApiClient();
 
-  @Override
-  public void beforeEach(ExtensionContext context) {
-    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Spend.class)
-        .ifPresent(anno -> {
-          SpendJson spendJson = new SpendJson(
-              null,
-              new Date(),
-              new CategoryJson(
-                  null,
-                  anno.category(),
-                  anno.username(),
-                  false
-              ),
-              anno.currency(),
-              anno.amount(),
-              anno.description(),
-              anno.username()
-          );
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Spend.class)
+                .ifPresent(anno -> {
+                    SpendJson spendJson = new SpendJson(
+                            null,
+                            new Date(),
+                            new CategoryJson(
+                                    null,
+                                    anno.category(),
+                                    anno.username(),
+                                    false
+                            ),
+                            anno.currency(),
+                            anno.amount(),
+                            anno.description(),
+                            anno.username()
+                    );
 
-          SpendJson created = spendApiClient.addSpend(spendJson);
-          context.getStore(NAMESPACE).put(context.getUniqueId(), created);
-        });
-  }
+                    SpendJson created = spendApiClient.addSpend(spendJson);
+                    context.getStore(NAMESPACE).put(context.getUniqueId(), created);
+                });
+    }
 
-  @Override
-  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    return parameterContext.getParameter().getType().isAssignableFrom(SpendJson.class);
-  }
+    @Override
+    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        return parameterContext.getParameter().getType().isAssignableFrom(SpendJson.class);
+    }
 
-  @Override
-  public SpendJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    return extensionContext.getStore(SpendingExtension.NAMESPACE).get(extensionContext.getUniqueId(), SpendJson.class);
-  }
+    @Override
+    public SpendJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+        return extensionContext.getStore(SpendingExtension.NAMESPACE).get(extensionContext.getUniqueId(), SpendJson.class);
+    }
 }
