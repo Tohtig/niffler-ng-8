@@ -14,10 +14,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Optional;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +45,35 @@ public class UsersQueueExtension implements
 
   @Override
   public void beforeTestExecution(ExtensionContext context) {
+    // Создаем HashMap для хранения всех пользователей, связанных с этим тестом.
+    Map<UserType, StaticUser> userMap = context.getStore(NAMESPACE)
+            .getOrComputeIfAbsent(
+                    context.getUniqueId(),
+                    key -> new HashMap<UserType, StaticUser>(),
+                    Map.class
+            );
+
+    // Обрабатываем все параметры тестового метода, аннотированные @UserType
+    Arrays.stream(context.getRequiredTestMethod().getParameters())
+            .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class))
+            .forEach(parameter -> {
+              UserType ut = parameter.getAnnotation(UserType.class);
+              Optional<StaticUser> user = Optional.empty();
+              StopWatch sw = StopWatch.createStarted();
+              while (user.isEmpty() && sw.getTime(TimeUnit.SECONDS) < 30) {
+                user = ut.empty()
+                        ? Optional.ofNullable(EMPTY_USERS.poll())
+                        : Optional.ofNullable(NOT_EMPTY_USERS.poll());
+              }
+              Allure.getLifecycle().updateTestCase(testCase ->
+                      testCase.setStart(new Date().getTime())
+              );
+              if (user.isEmpty()) {
+                throw new IllegalStateException("Невозможно получить пользователя после 30 секунд.");
+              }
+              userMap.put(ut, user.get());
+            });
+    /*
     Arrays.stream(context.getRequiredTestMethod().getParameters())
         .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class))
         .findFirst()
@@ -74,10 +100,26 @@ public class UsersQueueExtension implements
               }
           );
         });
+     */
   }
 
   @Override
   public void afterTestExecution(ExtensionContext context) {
+    // Получаем HashMap из контекста.
+    Map<UserType, StaticUser> map = context.getStore(NAMESPACE)
+            .get(context.getUniqueId(), Map.class);
+    if (map != null) {
+      for (Map.Entry<UserType, StaticUser> entry : map.entrySet()) {
+        if (entry.getValue().empty()) {
+          EMPTY_USERS.add(entry.getValue());
+        } else {
+          NOT_EMPTY_USERS.add(entry.getValue());
+        }
+      }
+      // Очистка хранилища для данного теста.
+      context.getStore(NAMESPACE).remove(context.getUniqueId());
+    }
+    /*
     StaticUser user = context.getStore(NAMESPACE).get(
         context.getUniqueId(),
         StaticUser.class
@@ -87,6 +129,7 @@ public class UsersQueueExtension implements
     } else {
       NOT_EMPTY_USERS.add(user);
     }
+     */
   }
 
   @Override
@@ -97,6 +140,16 @@ public class UsersQueueExtension implements
 
   @Override
   public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+    UserType ut = parameterContext.getParameter().getAnnotation(UserType.class);
+    Map<UserType, StaticUser> map = extensionContext.getStore(NAMESPACE)
+            .get(extensionContext.getUniqueId(), Map.class);
+    StaticUser user = map.get(ut);
+    if (user == null) {
+      throw new ParameterResolutionException("Нет соответствующего пользователя для параметра с аннотацией " + ut);
+    }
+    return user;
+    /*
     return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), StaticUser.class);
+     */
   }
 }
