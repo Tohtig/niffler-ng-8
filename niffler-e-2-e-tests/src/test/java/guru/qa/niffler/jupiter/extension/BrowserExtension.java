@@ -1,10 +1,12 @@
 package guru.qa.niffler.jupiter.extension;
 
+import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.Allure;
 import io.qameta.allure.selenide.AllureSelenide;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -20,6 +22,13 @@ public class BrowserExtension implements
         AfterEachCallback,
         TestExecutionExceptionHandler,
         LifecycleMethodExecutionExceptionHandler {
+
+    @BeforeAll
+    static void setup() {
+        Configuration.timeout = 10000; // 10 секунд для всех ожиданий
+        Configuration.pageLoadTimeout = 15000; // 15 секунд для загрузки страницы
+        // другие настройки...
+    }
 
     @Override
     public void afterEach(ExtensionContext context) throws Exception {

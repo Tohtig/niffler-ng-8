@@ -22,10 +22,9 @@ public class FriendsWebTest {
   @ExtendWith(UsersQueueExtension.class)
   void friendsShouldBePresentInFriendsTable(@UserType(Type.WITH_FRIEND) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
-            .login(user.username(), user.password());
-
-    FriendsPage friendsPage = Selenide.open(CFG.friendsUrl(), FriendsPage.class);
-    friendsPage.assertFriendPresent(user.friend());
+            .login(user.username(), user.password())
+            .goToFriendsList()
+            .assertFriendPresent(user.friend());
   }
 
   @Test

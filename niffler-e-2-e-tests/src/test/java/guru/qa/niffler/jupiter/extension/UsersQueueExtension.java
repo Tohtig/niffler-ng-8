@@ -1,5 +1,8 @@
 package guru.qa.niffler.jupiter.extension;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.qameta.allure.Allure;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
@@ -19,11 +22,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 public class UsersQueueExtension implements
-    BeforeTestExecutionCallback,
-    AfterTestExecutionCallback,
-    ParameterResolver {
+        BeforeTestExecutionCallback,
+        AfterTestExecutionCallback,
+        ParameterResolver {
 
   public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UsersQueueExtension.class);
+  private static final long TIMEOUT_SECONDS = 30;
+  private static final Logger logger = LoggerFactory.getLogger(UsersQueueExtension.class);
 
   public enum Type {
     EMPTY,
@@ -35,9 +40,9 @@ public class UsersQueueExtension implements
   public record StaticUser(
           String username,
           String password,
-          String friend,         // друг (если есть)
-          String income,         // входящий запрос
-          String outcome         // исходящий запрос
+          String friend,
+          String income,
+          String outcome
   ) {
   }
 
@@ -61,99 +66,98 @@ public class UsersQueueExtension implements
 
   @Override
   public void beforeTestExecution(ExtensionContext context) {
-    // Создаем или получаем HashMap для хранения пользователей
-    // Приведение типов безопасно, и предупреждение будет подавлено. В данном случае это оправдано, так как метод
-    // getOrComputeIfAbsent возвращает именно тот объект, который мы создаем в лямбда-выражении.
-    @SuppressWarnings("unchecked")
-    Map<Type, StaticUser> userMap = (Map<Type, StaticUser>) context.getStore(NAMESPACE)
-            .getOrComputeIfAbsent(
-                    context.getUniqueId(),
-                    key -> new HashMap<>()
-            );
+    // Получаем или создаем хранилище для текущего теста
+    Map<UserType, StaticUser> userMap = getTestStore(context);
 
-    // Обрабатываем все параметры с аннотацией @UserType
+    // Обрабатываем параметры метода с аннотацией @UserType
     Arrays.stream(context.getRequiredTestMethod().getParameters())
             .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class))
-            .forEach(parameter -> {
-              UserType ut = parameter.getAnnotation(UserType.class);
-              Type type = ut.value();
+            .map(p -> p.getAnnotation(UserType.class))
+            .forEach(ut -> {
               Optional<StaticUser> user = Optional.empty();
               StopWatch sw = StopWatch.createStarted();
 
-              // Ждем до 30 секунд, пытаясь получить пользователя из соответствующей очереди
-              while (user.isEmpty() && sw.getTime(TimeUnit.SECONDS) < 30) {
-                user = switch (type) {
-                  case EMPTY -> Optional.ofNullable(EMPTY_USERS.poll());
-                  case WITH_FRIEND -> Optional.ofNullable(WITH_FRIEND_USERS.poll());
-                  case WITH_INCOME_REQUEST -> Optional.ofNullable(WITH_INCOME_REQUEST_USERS.poll());
-                  case WITH_OUTCOME_REQUEST -> Optional.ofNullable(WITH_OUTCOME_REQUEST_USERS.poll());
-                };
+              // Пытаемся получить пользователя с таймаутом
+              while (user.isEmpty() && sw.getTime(TimeUnit.SECONDS) < TIMEOUT_SECONDS) {
+                user = pollUserByType(ut.value());
+
+                if (user.isEmpty()) {
+                  logger.debug("Ожидание пользователя типа {}, прошло {} сек",
+                          ut.value(), sw.getTime(TimeUnit.SECONDS));
+                  try {
+                    Thread.sleep(200);
+                  } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                  }
+                }
               }
 
+              // Устанавливаем время начала в Allure
               Allure.getLifecycle().updateTestCase(testCase ->
-                      testCase.setStart(new Date().getTime())
+                      testCase.setStart(System.currentTimeMillis())
               );
 
-              if (user.isEmpty()) {
-                throw new IllegalStateException("Не удалось получить пользователя типа " + type + " после 30 секунд ожидания.");
-              }
-
-              // Сохраняем пользователя в HashMap с ключом Type
-              userMap.put(type, user.get());
+              // Сохраняем пользователя или выбрасываем исключение
+              user.ifPresentOrElse(
+                      u -> userMap.put(ut, u),
+                      () -> { throw new IllegalStateException("Не удалось получить пользователя типа "
+                              + ut.value() + " после " + TIMEOUT_SECONDS + " секунд."); }
+              );
             });
   }
 
   @Override
   public void afterTestExecution(ExtensionContext context) {
-    // Получаем HashMap с пользователями
-    @SuppressWarnings("unchecked")
-    Map<Type, StaticUser> map = (Map<Type, StaticUser>) context.getStore(NAMESPACE).get(
-            context.getUniqueId(),
-            Map.class
-    );
+    Map<UserType, StaticUser> userMap = getTestStore(context);
 
-    if (map != null) {
-      // Возвращаем всех пользователей в соответствующие очереди
-      for (Map.Entry<Type, StaticUser> entry : map.entrySet()) {
-        Type type = entry.getKey();
-        StaticUser user = entry.getValue();
-
-        switch (type) {
-          case EMPTY -> EMPTY_USERS.add(user);
-          case WITH_FRIEND -> WITH_FRIEND_USERS.add(user);
-          case WITH_INCOME_REQUEST -> WITH_INCOME_REQUEST_USERS.add(user);
-          case WITH_OUTCOME_REQUEST -> WITH_OUTCOME_REQUEST_USERS.add(user);
-        }
+    // Возвращаем всех использованных пользователей обратно в очереди
+    userMap.forEach((ut, user) -> {
+      switch (ut.value()) {
+        case EMPTY -> EMPTY_USERS.add(user);
+        case WITH_FRIEND -> WITH_FRIEND_USERS.add(user);
+        case WITH_INCOME_REQUEST -> WITH_INCOME_REQUEST_USERS.add(user);
+        case WITH_OUTCOME_REQUEST -> WITH_OUTCOME_REQUEST_USERS.add(user);
       }
+    });
 
-      // Очищаем хранилище после использования
-      context.getStore(NAMESPACE).remove(context.getUniqueId());
-    }
+    // Очищаем хранилище
+    context.getStore(NAMESPACE).remove(context.getUniqueId());
   }
 
   @Override
-  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
     return parameterContext.getParameter().getType().isAssignableFrom(StaticUser.class)
             && AnnotationSupport.isAnnotated(parameterContext.getParameter(), UserType.class);
   }
 
   @Override
-  public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    UserType ut = parameterContext.getParameter().getAnnotation(UserType.class);
-    Type type = ut.value();
+  public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
+    UserType annotation = parameterContext.getParameter().getAnnotation(UserType.class);
+    Map<UserType, StaticUser> userMap = getTestStore(extensionContext);
 
-    @SuppressWarnings("unchecked")
-    Map<Type, StaticUser> map = extensionContext.getStore(NAMESPACE).get(
-            extensionContext.getUniqueId(),
-            Map.class
-    );
-
-    // Получаем пользователя из HashMap по типу
-    StaticUser user = map.get(type);
+    StaticUser user = userMap.get(annotation);
     if (user == null) {
-      throw new ParameterResolutionException("Пользователь не найден для типа " + type);
+      throw new ParameterResolutionException("Не найден пользователь для параметра с аннотацией " + annotation);
     }
 
     return user;
+  }
+
+  // Вспомогательные методы
+
+  @SuppressWarnings("unchecked")
+  private Map<UserType, StaticUser> getTestStore(ExtensionContext context) {
+    return (Map<UserType, StaticUser>) context.getStore(NAMESPACE)
+            .getOrComputeIfAbsent(context.getUniqueId(), k -> new HashMap<>());
+  }
+
+  private Optional<StaticUser> pollUserByType(Type type) {
+    return switch (type) {
+      case EMPTY -> Optional.ofNullable(EMPTY_USERS.poll());
+      case WITH_FRIEND -> Optional.ofNullable(WITH_FRIEND_USERS.poll());
+      case WITH_INCOME_REQUEST -> Optional.ofNullable(WITH_INCOME_REQUEST_USERS.poll());
+      case WITH_OUTCOME_REQUEST -> Optional.ofNullable(WITH_OUTCOME_REQUEST_USERS.poll());
+    };
   }
 }

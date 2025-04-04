@@ -1,7 +1,7 @@
 buildscript {
     ext {
         junitVersion = '5.11.4'
-        allureVersion = '2.29.1'
+        allureVersion = '2.29.0'
         selenideVersion = '7.7.1'
         okhttp3Version = '3.14.9'
         retrofitVersion = '2.11.0'
@@ -28,6 +28,13 @@ plugins {
     id 'io.qameta.allure' version '2.12.0'
     id 'io.qameta.allure-adapter' version '2.12.0'
     id 'com.github.edeandrea.xjc-generation' version '1.6'
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.maven.apache.org/maven2" }
+    maven { url "https://plugins.gradle.org/m2/" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 group = 'guru.qa'

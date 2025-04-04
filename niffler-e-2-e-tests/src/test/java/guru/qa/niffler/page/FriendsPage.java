@@ -5,6 +5,9 @@ import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 
+import java.time.Duration;
+
+import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
@@ -19,7 +22,7 @@ public class FriendsPage {
 
   public FriendsPage() {
     // Проверка загрузки страницы
-    friendsTab.shouldBe(Condition.visible);
+    friendsTab.shouldBe(visible, Duration.ofSeconds(10));
   }
 
   // Методы для переключения между вкладками
@@ -36,7 +39,7 @@ public class FriendsPage {
   // Методы для проверки наличия друзей и запросов
   public FriendsPage assertFriendPresent(String friendUsername) {
     openFriendsTab();
-    friendsList.findBy(Condition.text(friendUsername)).shouldBe(Condition.visible);
+    friendsList.findBy(Condition.text(friendUsername)).shouldBe(visible);
     return this;
   }
 
@@ -48,7 +51,7 @@ public class FriendsPage {
 
   public FriendsPage assertIncomingRequestPresent(String username) {
     openFriendsTab();
-    incomingRequestsList.findBy(Condition.text(username)).shouldBe(Condition.visible);
+    incomingRequestsList.findBy(Condition.text(username)).shouldBe(visible);
     return this;
   }
 
