@@ -4,6 +4,7 @@ import com.codeborne.selenide.CollectionCondition;
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import io.qameta.allure.Step;
 
 import java.time.Duration;
 
@@ -25,41 +26,43 @@ public class FriendsPage {
     friendsTab.shouldBe(visible, Duration.ofSeconds(10));
   }
 
-  // Методы для переключения между вкладками
+  @Step("Открытие вкладки друзей")
   public FriendsPage openFriendsTab() {
     friendsTab.click();
     return this;
   }
 
+  @Step("Открытие вкладки всех людей")
   public FriendsPage openAllPeopleTab() {
     allPeopleTab.click();
     return this;
   }
 
-  // Методы для проверки наличия друзей и запросов
+  @Step("Проверка наличия друга с именем пользователя: {0}")
   public FriendsPage assertFriendPresent(String friendUsername) {
     openFriendsTab();
     friendsList.findBy(Condition.text(friendUsername)).shouldBe(visible);
     return this;
   }
 
+  @Step("Проверка, что список друзей пуст")
   public FriendsPage assertFriendsListEmpty() {
     openFriendsTab();
     friendsList.shouldHave(CollectionCondition.size(0));
     return this;
   }
 
+  @Step("Проверка наличия входящего запроса от пользователя: {0}")
   public FriendsPage assertIncomingRequestPresent(String username) {
     openFriendsTab();
     incomingRequestsList.findBy(Condition.text(username)).shouldBe(visible);
     return this;
   }
 
+  @Step("Проверка наличия исходящего запроса к пользователю: {0}")
   public FriendsPage assertOutgoingRequestPresent(String username) {
-    openAllPeopleTab();
-    // Ищем элемент с именем пользователя и статусом "Waiting..."
-    $$("tr").findBy(Condition.text(username))
-            .shouldHave(Condition.text("Waiting..."));
+    // Делегируем проверку методу из PeoplePage
+    new PeoplePage().checkInvitationSentToUser(username);
     return this;
   }
 }

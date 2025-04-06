@@ -1,17 +1,11 @@
 package guru.qa.niffler.jupiter.extension;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.qameta.allure.Allure;
 import org.apache.commons.lang3.time.StopWatch;
-import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
-import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -101,8 +95,10 @@ public class UsersQueueExtension implements
               // Сохраняем пользователя или выбрасываем исключение
               user.ifPresentOrElse(
                       u -> userMap.put(ut, u),
-                      () -> { throw new IllegalStateException("Не удалось получить пользователя типа "
-                              + ut.value() + " после " + TIMEOUT_SECONDS + " секунд."); }
+                      () -> {
+                        throw new IllegalStateException("Не удалось получить пользователя типа "
+                                + ut.value() + " после " + TIMEOUT_SECONDS + " секунд.");
+                      }
               );
             });
   }

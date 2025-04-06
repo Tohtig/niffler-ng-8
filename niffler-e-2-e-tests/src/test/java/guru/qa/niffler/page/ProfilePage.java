@@ -69,8 +69,4 @@ public class ProfilePage {
         return this;
     }
 
-    public FriendsPage goToFriendsList() {
-        $("a[href*='/people/friends']").click();
-        return new FriendsPage();
-    }
 }

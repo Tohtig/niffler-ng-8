@@ -4,6 +4,7 @@ import com.codeborne.selenide.Selenide;
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.page.LoginPage;
 import guru.qa.niffler.page.RegisterPage;
+import io.qameta.allure.Step;
 import org.junit.jupiter.api.Test;
 
 public class RegistrationTest {
@@ -11,6 +12,7 @@ public class RegistrationTest {
     private static final Config CFG = Config.getInstance();
 
     @Test
+    @Step("Проверка успешной регистрации нового пользователя")
     void shouldRegisterNewUser() {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .clickRegister();
@@ -24,6 +26,7 @@ public class RegistrationTest {
     }
 
     @Test
+    @Step("Проверка ошибки при регистрации с существующим именем пользователя")
     void shouldNotRegisterNewUserWithExistingUsername() {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .clickRegister();
@@ -37,6 +40,7 @@ public class RegistrationTest {
     }
 
     @Test
+    @Step("Проверка ошибки при несовпадении пароля и подтверждения пароля")
     void shouldShowErrorIfPasswordAndConfirmPasswordAreNotEqual() {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .clickRegister();

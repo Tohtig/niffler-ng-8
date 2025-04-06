@@ -7,6 +7,7 @@ import guru.qa.niffler.jupiter.extension.UsersQueueExtension;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.page.LoginPage;
 import guru.qa.niffler.page.ProfilePage;
+import io.qameta.allure.Step;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -19,6 +20,7 @@ public class ProfileTest {
             archived = true
     )
     @Test
+    @Step("Проверка наличия архивных категорий в списке категорий")
     void archivedCategoryShouldPresentInCategoriesList(CategoryJson category) {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .login("duck", "12345");
@@ -39,6 +41,7 @@ public class ProfileTest {
             archived = false
     )
     @Test
+    @Step("Проверка наличия активных категорий в списке категорий")
     void activeCategoryShouldPresentInCategoriesList(CategoryJson category) {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .login("duck", "12345");
