@@ -60,47 +60,57 @@ public class UsersQueueExtension implements
 
   @Override
   public void beforeTestExecution(ExtensionContext context) {
-    // Получаем или создаем хранилище для текущего теста
     Map<UserType, StaticUser> userMap = getTestStore(context);
 
-    // Обрабатываем параметры метода с аннотацией @UserType
-    Arrays.stream(context.getRequiredTestMethod().getParameters())
+    // Устанавливаем время начала в Allure один раз
+    Allure.getLifecycle().updateTestCase(testCase ->
+            testCase.setStart(System.currentTimeMillis())
+    );
+
+    // Находим и обрабатываем все параметры с аннотацией @UserType
+    findUserTypeParameters(context)
+            .forEach(userType -> processUserParameter(userType, userMap));
+  }
+
+  private List<UserType> findUserTypeParameters(ExtensionContext context) {
+    return Arrays.stream(context.getRequiredTestMethod().getParameters())
             .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class))
             .map(p -> p.getAnnotation(UserType.class))
-            .forEach(ut -> {
-              Optional<StaticUser> user = Optional.empty();
-              StopWatch sw = StopWatch.createStarted();
+            .toList();
+  }
 
-              // Пытаемся получить пользователя с таймаутом
-              while (user.isEmpty() && sw.getTime(TimeUnit.SECONDS) < TIMEOUT_SECONDS) {
-                user = pollUserByType(ut.value());
+  private void processUserParameter(UserType userType, Map<UserType, StaticUser> userMap) {
+    StaticUser user = waitForAvailableUser(userType.value());
+    userMap.put(userType, user);
+  }
 
-                if (user.isEmpty()) {
-                  logger.debug("Ожидание пользователя типа {}, прошло {} сек",
-                          ut.value(), sw.getTime(TimeUnit.SECONDS));
-                  try {
-                    Thread.sleep(200);
-                  } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                  }
-                }
-              }
+  private StaticUser waitForAvailableUser(Type type) {
+    StopWatch sw = StopWatch.createStarted();
+    Optional<StaticUser> user = Optional.empty();
 
-              // Устанавливаем время начала в Allure
-              Allure.getLifecycle().updateTestCase(testCase ->
-                      testCase.setStart(System.currentTimeMillis())
-              );
+    while (sw.getTime(TimeUnit.SECONDS) < TIMEOUT_SECONDS) {
+      user = pollUserByType(type);
 
-              // Сохраняем пользователя или выбрасываем исключение
-              user.ifPresentOrElse(
-                      u -> userMap.put(ut, u),
-                      () -> {
-                        throw new IllegalStateException("Не удалось получить пользователя типа "
-                                + ut.value() + " после " + TIMEOUT_SECONDS + " секунд.");
-                      }
-              );
-            });
+      if (user.isPresent()) {
+        return user.get();
+      }
+
+      long elapsedSeconds = sw.getTime(TimeUnit.SECONDS);
+      long remainingSeconds = TIMEOUT_SECONDS - elapsedSeconds;
+      logger.debug("Ожидание пользователя типа {}, прошло {} сек, осталось {} сек",
+              type, elapsedSeconds, remainingSeconds);
+
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException("Ожидание пользователя было прервано", e);
+      }
+    }
+
+    throw new IllegalStateException(String.format(
+            "Не удалось получить пользователя типа %s после %d секунд",
+            type, TIMEOUT_SECONDS));
   }
 
   @Override

@@ -58,11 +58,4 @@ public class FriendsPage {
     incomingRequestsList.findBy(Condition.text(username)).shouldBe(visible);
     return this;
   }
-
-  @Step("Проверка наличия исходящего запроса к пользователю: {0}")
-  public FriendsPage assertOutgoingRequestPresent(String username) {
-    // Делегируем проверку методу из PeoplePage
-    new PeoplePage().checkInvitationSentToUser(username);
-    return this;
-  }
 }

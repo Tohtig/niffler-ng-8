@@ -10,8 +10,6 @@ public interface Config {
 
   String profileUrl();
 
-  String friendsUrl();
-
   String spendUrl();
 
   String ghUrl();
