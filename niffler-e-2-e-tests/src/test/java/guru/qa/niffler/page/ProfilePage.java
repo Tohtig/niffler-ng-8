@@ -69,9 +69,4 @@ public class ProfilePage {
         return this;
     }
 
-    // Метод для переключения отображения архивных категорий
-    private ProfilePage toggleArchivedCategories() {
-        showArchivedCategoriesToggle.click();
-        return this;
-    }
 }
