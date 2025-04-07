@@ -13,14 +13,13 @@ import io.qameta.allure.Step;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-@ExtendWith(BrowserExtension.class)
+@ExtendWith({BrowserExtension.class, UsersQueueExtension.class})
 public class FriendsWebTest {
 
   private final Config CFG = Config.getInstance();
 
   @Test
   @Step("Проверка наличия друзей в таблице друзей")
-  @ExtendWith(UsersQueueExtension.class)
   void friendsShouldBePresentInFriendsTable(@UserType(Type.WITH_FRIEND) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
             .login(user.username(), user.password())
@@ -30,7 +29,6 @@ public class FriendsWebTest {
 
   @Test
   @Step("Проверка пустой таблицы друзей для нового пользователя")
-  @ExtendWith(UsersQueueExtension.class)
   void friendsTableShouldBeEmptyForNewUser(@UserType(Type.EMPTY) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
             .login(user.username(), user.password())
@@ -40,7 +38,6 @@ public class FriendsWebTest {
 
   @Test
   @Step("Проверка наличия входящих приглашений в таблице друзей")
-  @ExtendWith(UsersQueueExtension.class)
   void incomeInvitationShouldBePresentInFriendsTable(@UserType(Type.WITH_INCOME_REQUEST) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
             .login(user.username(), user.password())
@@ -50,7 +47,6 @@ public class FriendsWebTest {
 
   @Test
   @Step("Проверка наличия исходящих приглашений в таблице всех пользователей")
-  @ExtendWith(UsersQueueExtension.class)
   void outcomeInvitationShouldBePresentInAllPeopleTable(@UserType(Type.WITH_OUTCOME_REQUEST) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
             .login(user.username(), user.password())

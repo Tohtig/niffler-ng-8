@@ -117,15 +117,7 @@ public class UsersQueueExtension implements
   public void afterTestExecution(ExtensionContext context) {
     Map<UserType, StaticUser> userMap = getTestStore(context);
 
-    // Возвращаем всех использованных пользователей обратно в очереди
-    userMap.forEach((ut, user) -> {
-      switch (ut.value()) {
-        case EMPTY -> EMPTY_USERS.add(user);
-        case WITH_FRIEND -> WITH_FRIEND_USERS.add(user);
-        case WITH_INCOME_REQUEST -> WITH_INCOME_REQUEST_USERS.add(user);
-        case WITH_OUTCOME_REQUEST -> WITH_OUTCOME_REQUEST_USERS.add(user);
-      }
-    });
+    userMap.forEach((ut, user) -> returnUserByType(ut.value(), user));
 
     // Очищаем хранилище
     context.getStore(NAMESPACE).remove(context.getUniqueId());
@@ -141,12 +133,7 @@ public class UsersQueueExtension implements
   public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
     UserType annotation = parameterContext.getParameter().getAnnotation(UserType.class);
     Map<UserType, StaticUser> userMap = getTestStore(extensionContext);
-
     StaticUser user = userMap.get(annotation);
-    if (user == null) {
-      throw new ParameterResolutionException("Не найден пользователь для параметра с аннотацией " + annotation);
-    }
-
     return user;
   }
 
@@ -158,12 +145,23 @@ public class UsersQueueExtension implements
             .getOrComputeIfAbsent(context.getUniqueId(), k -> new HashMap<>());
   }
 
-  private Optional<StaticUser> pollUserByType(Type type) {
+  // Метод для возврата очереди по заданному типу
+  private Queue<StaticUser> getQueueByType(Type type) {
     return switch (type) {
-      case EMPTY -> Optional.ofNullable(EMPTY_USERS.poll());
-      case WITH_FRIEND -> Optional.ofNullable(WITH_FRIEND_USERS.poll());
-      case WITH_INCOME_REQUEST -> Optional.ofNullable(WITH_INCOME_REQUEST_USERS.poll());
-      case WITH_OUTCOME_REQUEST -> Optional.ofNullable(WITH_OUTCOME_REQUEST_USERS.poll());
+      case EMPTY -> EMPTY_USERS;
+      case WITH_FRIEND -> WITH_FRIEND_USERS;
+      case WITH_INCOME_REQUEST -> WITH_INCOME_REQUEST_USERS;
+      case WITH_OUTCOME_REQUEST -> WITH_OUTCOME_REQUEST_USERS;
     };
+  }
+
+  // Используется для выбора пользователя из соответствующей очереди
+  private Optional<StaticUser> pollUserByType(Type type) {
+    return Optional.ofNullable(getQueueByType(type).poll());
+  }
+
+  // Пример использования при возврате пользователя в очередь
+  private void returnUserByType(Type type, StaticUser user) {
+    getQueueByType(type).add(user);
   }
 }
