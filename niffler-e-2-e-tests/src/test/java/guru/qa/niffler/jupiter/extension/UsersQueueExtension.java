@@ -74,7 +74,7 @@ public class UsersQueueExtension implements
 
   private List<UserType> findUserTypeParameters(ExtensionContext context) {
     return Arrays.stream(context.getRequiredTestMethod().getParameters())
-            .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class))
+            .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class) && p.getType().isAssignableFrom(StaticUser.class))
             .map(p -> p.getAnnotation(UserType.class))
             .toList();
   }
