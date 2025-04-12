@@ -3,10 +3,9 @@ package guru.qa.niffler.jupiter.extension;
 import guru.qa.niffler.api.SpendApiClient;
 import guru.qa.niffler.jupiter.annotation.Category;
 import guru.qa.niffler.model.CategoryJson;
+import guru.qa.niffler.utils.RandomDataUtils;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
-
-import java.util.UUID;
 
 public class CategoryExtension implements BeforeEachCallback, AfterTestExecutionCallback, ParameterResolver {
 
@@ -19,7 +18,7 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
             .ifPresent(anno -> {
               CategoryJson categoryJson = new CategoryJson(
                       null,
-                      getRandomName(),
+                      RandomDataUtils.randomCategoryName(),
                       anno.username(),
                       anno.archived()
               );
@@ -36,10 +35,6 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
               }
               context.getStore(NAMESPACE).put(context.getUniqueId(), created);
             });
-  }
-
-  private String getRandomName() {
-    return "Category_" + UUID.randomUUID().toString().substring(0, 8);
   }
 
   @Override
