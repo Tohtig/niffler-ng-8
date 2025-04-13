@@ -1,56 +1,54 @@
 package guru.qa.niffler.test.web;
 
+
 import com.codeborne.selenide.Selenide;
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.jupiter.annotation.meta.WebTest;
 import guru.qa.niffler.jupiter.extension.UsersQueueExtension.StaticUser;
+import guru.qa.niffler.jupiter.extension.UsersQueueExtension.Type;
 import guru.qa.niffler.jupiter.extension.UsersQueueExtension.UserType;
 import guru.qa.niffler.page.LoginPage;
+import io.qameta.allure.Step;
 import org.junit.jupiter.api.Test;
-
-import static guru.qa.niffler.jupiter.extension.UsersQueueExtension.UserType.Type.EMPTY;
-import static guru.qa.niffler.jupiter.extension.UsersQueueExtension.UserType.Type.WITH_FRIEND;
-import static guru.qa.niffler.jupiter.extension.UsersQueueExtension.UserType.Type.WITH_INCOME_REQUEST;
-import static guru.qa.niffler.jupiter.extension.UsersQueueExtension.UserType.Type.WITH_OUTCOME_REQUEST;
 
 @WebTest
 public class FriendsTest {
 
-  private static final Config CFG = Config.getInstance();
+  private final Config CFG = Config.getInstance();
 
   @Test
-  void friendShouldBePresentInFriendsTable(@UserType(WITH_FRIEND) StaticUser user) {
+  @Step("Проверка наличия друзей в таблице друзей")
+  void friendsShouldBePresentInFriendsTable(@UserType(Type.WITH_FRIEND) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
-        .successLogin(user.username(), user.password())
-        .checkThatPageLoaded()
-        .friendsPage()
-        .checkExistingFriends(user.friend());
+            .login(user.username(), user.password())
+            .goToFriendsList()
+            .assertFriendPresent(user.friend());
   }
 
   @Test
-  void friendsTableShouldBeEmptyForNewUser(@UserType(EMPTY) StaticUser user) {
+  @Step("Проверка пустой таблицы друзей для нового пользователя")
+  void friendsTableShouldBeEmptyForNewUser(@UserType(Type.EMPTY) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
-        .successLogin(user.username(), user.password())
-        .checkThatPageLoaded()
-        .friendsPage()
-        .checkNoExistingFriends();
+            .login(user.username(), user.password())
+            .goToFriendsList()
+            .assertFriendsListEmpty();
   }
 
   @Test
-  void incomeInvitationBePresentInFriendsTable(@UserType(WITH_INCOME_REQUEST) StaticUser user) {
+  @Step("Проверка наличия входящих приглашений в таблице друзей")
+  void incomeInvitationShouldBePresentInFriendsTable(@UserType(Type.WITH_INCOME_REQUEST) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
-        .successLogin(user.username(), user.password())
-        .checkThatPageLoaded()
-        .friendsPage()
-        .checkExistingInvitations(user.income());
+            .login(user.username(), user.password())
+            .goToFriendsList()
+            .assertIncomingRequestPresent(user.income());
   }
 
   @Test
-  void outcomeInvitationBePresentInAllPeoplesTable(@UserType(WITH_OUTCOME_REQUEST) StaticUser user) {
+  @Step("Проверка наличия исходящих приглашений в таблице всех пользователей")
+  void outcomeInvitationShouldBePresentInAllPeopleTable(@UserType(Type.WITH_OUTCOME_REQUEST) StaticUser user) {
     Selenide.open(CFG.frontUrl(), LoginPage.class)
-        .successLogin(user.username(), user.password())
-        .checkThatPageLoaded()
-        .allPeoplesPage()
-        .checkInvitationSentToUser(user.outcome());
+            .login(user.username(), user.password())
+            .allPeoplesPage()
+            .checkInvitationSentToUser(user.outcome());
   }
 }
