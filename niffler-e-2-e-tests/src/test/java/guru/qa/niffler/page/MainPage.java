@@ -6,14 +6,14 @@ import io.qameta.allure.Step;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.$$;
+import static com.codeborne.selenide.Selenide.*;
 
 public class MainPage {
     private final ElementsCollection tableRows = $("#spendings tbody").$$("tr");
     private final SelenideElement contextMenuInAvatarBtn = $("button[aria-label='Menu']");
     private final ElementsCollection contextMenuElements = $$(".MuiList-padding li");
-
+    private final SelenideElement accountMenuButton =  $("button[aria-label=\"Menu\"]");
+    private final SelenideElement profileMenuItem = $("a.nav-link[href*='/profile']");
     private final SelenideElement statComponent = $("#stat");
     private final SelenideElement spendingTable = $("#spendings");
 
@@ -27,6 +27,13 @@ public class MainPage {
     public MainPage checkThatTableContainsSpending(String spendingDescription) {
         tableRows.find(text(spendingDescription)).should(visible);
         return this;
+    }
+
+    @Step("Переход во вкладку Профиль")
+    public ProfilePage openProfilePage() {
+        accountMenuButton.click();
+        profileMenuItem.click();
+        return page(ProfilePage.class);
     }
 
     @Step("Переход во вкладку Friends")

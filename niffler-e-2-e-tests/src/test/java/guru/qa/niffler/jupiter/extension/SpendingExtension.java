@@ -2,6 +2,7 @@ package guru.qa.niffler.jupiter.extension;
 
 import guru.qa.niffler.api.SpendApiClient;
 import guru.qa.niffler.jupiter.annotation.Spend;
+import guru.qa.niffler.jupiter.annotation.User;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.model.SpendJson;
 import org.junit.jupiter.api.extension.*;
@@ -16,35 +17,38 @@ public class SpendingExtension implements BeforeEachCallback, ParameterResolver 
 
   @Override
   public void beforeEach(ExtensionContext context) {
-    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Spend.class)
-            .ifPresent(anno -> {
-              SpendJson spendJson = new SpendJson(
+    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), User.class)
+            .ifPresent(userAnno -> {
+              if (userAnno.spends() == null || userAnno.spends().length == 0) {
+                return;
+              }
+              Spend spendAnno = userAnno.spends()[0];
+              SpendJson spend = new SpendJson(
                       null,
                       new Date(),
                       new CategoryJson(
                               null,
-                              anno.category(),
-                              anno.username(),
+                              spendAnno.category(),
+                              userAnno.username(),
                               false
                       ),
-                      anno.currency(),
-                      anno.amount(),
-                      anno.description(),
-                      anno.username()
+                      spendAnno.currency(),
+                      spendAnno.amount(),
+                      spendAnno.description(),
+                      userAnno.username()
               );
-
-              SpendJson created = spendApiClient.addSpend(spendJson);
+              SpendJson created = spendApiClient.addSpend(spend);
               context.getStore(NAMESPACE).put(context.getUniqueId(), created);
             });
-  }
+}
 
-  @Override
-  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    return parameterContext.getParameter().getType().isAssignableFrom(SpendJson.class);
-  }
+@Override
+public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+  return parameterContext.getParameter().getType().isAssignableFrom(SpendJson.class);
+}
 
-  @Override
-  public SpendJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    return extensionContext.getStore(SpendingExtension.NAMESPACE).get(extensionContext.getUniqueId(), SpendJson.class);
-  }
+@Override
+public SpendJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+  return extensionContext.getStore(SpendingExtension.NAMESPACE).get(extensionContext.getUniqueId(), SpendJson.class);
+}
 }

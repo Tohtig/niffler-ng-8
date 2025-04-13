@@ -2,6 +2,7 @@ package guru.qa.niffler.jupiter.extension;
 
 import guru.qa.niffler.api.SpendApiClient;
 import guru.qa.niffler.jupiter.annotation.Category;
+import guru.qa.niffler.jupiter.annotation.User;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.utils.RandomDataUtils;
 import org.junit.jupiter.api.extension.*;
@@ -14,17 +15,21 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
-    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Category.class)
-            .ifPresent(anno -> {
-              CategoryJson categoryJson = new CategoryJson(
+    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), User.class)
+            .ifPresent(userAnno -> {
+              if (userAnno.categories() == null || userAnno.categories().length == 0) {
+                return;
+              }
+              Category categoryAnno = userAnno.categories()[0];
+              CategoryJson category = new CategoryJson(
                       null,
                       RandomDataUtils.randomCategoryName(),
-                      anno.username(),
-                      anno.archived()
+                      userAnno.username(),
+                      categoryAnno.archived()
               );
 
-              CategoryJson created = spendApiClient.addCategory(categoryJson);
-              if (anno.archived()) {
+              CategoryJson created = spendApiClient.addCategory(category);
+              if (categoryAnno.archived()) {
                 CategoryJson archvedCategory = new CategoryJson(
                         created.id(),
                         created.name(),
@@ -33,7 +38,10 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
                 );
                 created = spendApiClient.updateCategory(archvedCategory);
               }
-              context.getStore(NAMESPACE).put(context.getUniqueId(), created);
+              context.getStore(NAMESPACE).put(
+                      context.getUniqueId(),
+                      created
+              );
             });
   }
 

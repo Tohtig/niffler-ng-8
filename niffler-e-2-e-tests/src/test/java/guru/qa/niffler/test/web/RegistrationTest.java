@@ -35,7 +35,7 @@ public class RegistrationTest {
                 .clickRegister();
 
         new RegisterPage()
-                .setUsername(RandomDataUtils.randomUsername())
+                .setUsername("duck")
                 .setPassword("12345")
                 .setConfirmPassword("12345")
                 .submitRegistrationExpectingError()
