@@ -9,6 +9,21 @@ enum LocalConfig implements Config {
   }
 
   @Override
+  public String authUrl() {
+    return "http://127.0.0.1:8081/";
+  }
+
+  @Override
+  public String gatewayUrl() {
+    return "http://127.0.0.1:8090/";
+  }
+
+  @Override
+  public String userdataUrl() {
+    return "http://127.0.0.1:8082/";
+  }
+
+  @Override
   public String ghUrl() {
     return "https://api.github.com/";
   }
@@ -16,11 +31,6 @@ enum LocalConfig implements Config {
   @Override
   public String profileUrl() {
     return frontUrl() + "profile";
-  }
-
-  @Override
-  public String friendsUrl() {
-    return frontUrl() + "people/friends";
   }
 
   @Override

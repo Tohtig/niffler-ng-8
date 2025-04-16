@@ -2,11 +2,14 @@ package guru.qa.niffler.test.web;
 
 import com.codeborne.selenide.Selenide;
 import guru.qa.niffler.config.Config;
+import guru.qa.niffler.jupiter.annotation.meta.WebTest;
 import guru.qa.niffler.page.LoginPage;
 import guru.qa.niffler.page.RegisterPage;
+import guru.qa.niffler.utils.RandomDataUtils;
 import io.qameta.allure.Step;
 import org.junit.jupiter.api.Test;
 
+@WebTest
 public class RegistrationTest {
 
     private static final Config CFG = Config.getInstance();
@@ -18,9 +21,9 @@ public class RegistrationTest {
                 .clickRegister();
 
         new RegisterPage()
-                .setUsername("newuser8")
-                .setPassword("password123")
-                .setConfirmPassword("password123")
+                .setUsername(RandomDataUtils.randomUsername())
+                .setPassword("12345")
+                .setConfirmPassword("12345")
                 .submitRegistration()
                 .checkThatPageContainsCongratulations();
     }
@@ -33,8 +36,8 @@ public class RegistrationTest {
 
         new RegisterPage()
                 .setUsername("duck")
-                .setPassword("password123")
-                .setConfirmPassword("password123")
+                .setPassword("12345")
+                .setConfirmPassword("12345")
                 .submitRegistrationExpectingError()
                 .checkThatPageContainsError("Username `duck` already exists");
     }
@@ -46,7 +49,7 @@ public class RegistrationTest {
                 .clickRegister();
 
         new RegisterPage()
-                .setUsername("newuser8")
+                .setUsername(RandomDataUtils.randomUsername())
                 .setPassword("password123")
                 .setConfirmPassword("121password1234")
                 .submitRegistrationExpectingError()
