@@ -23,9 +23,9 @@ public class CategoryDaoJdbc implements CategoryDao {
   public CategoryEntity create(CategoryEntity category) {
     try (Connection connection = Databases.connection(CFG.spendJdbcUrl())) {
       try (PreparedStatement ps = connection.prepareStatement(
-          "INSERT INTO category (username, name, archived) " +
-              "VALUES (?, ?, ?)",
-          Statement.RETURN_GENERATED_KEYS
+              "INSERT INTO category (username, name, archived) " +
+                      "VALUES (?, ?, ?)",
+              Statement.RETURN_GENERATED_KEYS
       )) {
         ps.setString(1, category.getUsername());
         ps.setString(2, category.getName());
@@ -102,6 +102,47 @@ public class CategoryDaoJdbc implements CategoryDao {
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public CategoryEntity update(CategoryEntity category) {
+    String sql = "UPDATE category SET name = ?, archived = ? WHERE id = ? AND username = ?";
+
+    try (Connection connection = Databases.connection(CFG.spendJdbcUrl());
+         PreparedStatement ps = connection.prepareStatement(sql)) {
+
+      ps.setString(1, category.getName());
+      ps.setBoolean(2, category.isArchived());
+      ps.setObject(3, category.getId());
+      ps.setString(4, category.getUsername());
+
+      int updated = ps.executeUpdate();
+      if (updated == 0) {
+        throw new RuntimeException("Не удалось обновить категорию с id: " + category.getId());
+      }
+
+      return findById(category.getId()).orElseThrow(() ->
+              new RuntimeException("Категория не найдена после обновления"));
+    } catch (SQLException e) {
+      throw new RuntimeException("Ошибка при обновлении категории", e);
+    }
+  }
+
+  public Optional<CategoryEntity> findById(UUID id) {
+    try (Connection connection = Databases.connection(CFG.spendJdbcUrl());
+         PreparedStatement ps = connection.prepareStatement(
+                 "SELECT * FROM category WHERE id = ?"
+         )) {
+      ps.setObject(1, id);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return Optional.of(mapResultSetToCategoryEntity(rs));
+        }
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException("Ошибка при поиске категории по id", e);
+    }
+    return Optional.empty();
   }
 
   private CategoryEntity mapResultSetToCategoryEntity(ResultSet rs) throws SQLException {
