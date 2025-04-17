@@ -1,9 +1,9 @@
 package guru.qa.niffler.jupiter.extension;
 
-import guru.qa.niffler.api.SpendApiClient;
 import guru.qa.niffler.jupiter.annotation.Category;
 import guru.qa.niffler.jupiter.annotation.User;
 import guru.qa.niffler.model.CategoryJson;
+import guru.qa.niffler.service.SpendDbClient;
 import guru.qa.niffler.utils.RandomDataUtils;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
@@ -11,7 +11,7 @@ import org.junit.platform.commons.support.AnnotationSupport;
 public class CategoryExtension implements BeforeEachCallback, AfterTestExecutionCallback, ParameterResolver {
 
   public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(CategoryExtension.class);
-  private final SpendApiClient spendApiClient = new SpendApiClient();
+  private final SpendDbClient spendDbClient = new SpendDbClient();
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
@@ -28,7 +28,7 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
                       categoryAnno.archived()
               );
 
-              CategoryJson created = spendApiClient.addCategory(category);
+              CategoryJson created = spendDbClient.createCategory(category);
               if (categoryAnno.archived()) {
                 CategoryJson archvedCategory = new CategoryJson(
                         created.id(),
@@ -36,7 +36,7 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
                         created.username(),
                         true // устанавливаем archived = true
                 );
-                created = spendApiClient.updateCategory(archvedCategory);
+                created = spendDbClient.updateCategory(archvedCategory);
               }
               context.getStore(NAMESPACE).put(
                       context.getUniqueId(),
@@ -56,7 +56,7 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
               category.username(),
               true // устанавливаем archived = true
       );
-      spendApiClient.updateCategory(archivedCategory);
+      spendDbClient.updateCategory(archivedCategory);
     }
   }
 

@@ -24,7 +24,7 @@ public class LoginTest {
     @Step("Проверка что пользователь остается на странице логина при вводе неверных учетных данных")
     void userShouldStayOnLoginPageAfterLoginWithBadCredentials() {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .login(RandomDataUtils.randomUsername(), "123456");
+                .login(RandomDataUtils.randomUsername(), "BAD");
         new LoginPage()
                 .checkThatLoginErrorIsDisplayed();
     }

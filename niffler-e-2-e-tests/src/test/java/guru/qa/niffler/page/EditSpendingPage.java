@@ -17,7 +17,8 @@ public class EditSpendingPage {
     }
 
     @Step("Сохранение изменений")
-    public void save() {
-        saveBtn.click();
+    public EditSpendingPage save() {
+      saveBtn.click();
+      return this;
     }
 }
