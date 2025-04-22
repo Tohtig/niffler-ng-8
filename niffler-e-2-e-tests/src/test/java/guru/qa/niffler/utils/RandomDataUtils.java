@@ -3,6 +3,7 @@ package guru.qa.niffler.utils;
 import com.github.javafaker.Faker;
 
 public class RandomDataUtils {
+
   private static final Faker faker = new Faker();
 
   public static String randomUsername() {
@@ -18,7 +19,7 @@ public class RandomDataUtils {
   }
 
   public static String randomCategoryName() {
-    return faker.commerce().department();
+    return faker.food().fruit();
   }
 
   public static String randomSentence(int wordsCount) {

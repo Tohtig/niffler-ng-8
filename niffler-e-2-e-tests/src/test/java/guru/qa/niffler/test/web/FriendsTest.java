@@ -12,7 +12,7 @@ import io.qameta.allure.Step;
 import org.junit.jupiter.api.Test;
 
 @WebTest
-public class FriendsWebTest {
+public class FriendsTest {
 
   private final Config CFG = Config.getInstance();
 
