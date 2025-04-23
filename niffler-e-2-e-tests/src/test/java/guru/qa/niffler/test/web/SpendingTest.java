@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test;
 
 @WebTest
 public class SpendingTest {
-
-
     private static final Config CFG = Config.getInstance();
 
     @Test

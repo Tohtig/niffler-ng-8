@@ -29,15 +29,13 @@ public class CategoryExtension implements BeforeEachCallback, AfterTestExecution
               );
 
               CategoryJson created = spendDbClient.createCategory(category);
-              if (categoryAnno.archived()) {
-                CategoryJson archvedCategory = new CategoryJson(
-                        created.id(),
-                        created.name(),
-                        created.username(),
-                        true // устанавливаем archived = true
-                );
-                created = spendDbClient.updateCategory(archvedCategory);
-              }
+              CategoryJson archvedCategory = new CategoryJson(
+                      created.id(),
+                      created.name(),
+                      created.username(),
+                      true // устанавливаем archived = true
+              );
+              created = spendDbClient.updateCategory(archvedCategory);
               context.getStore(NAMESPACE).put(
                       context.getUniqueId(),
                       created
