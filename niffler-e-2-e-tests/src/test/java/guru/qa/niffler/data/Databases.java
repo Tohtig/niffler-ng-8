@@ -20,7 +20,7 @@ public class Databases {
   private Databases() {
   }
 
-  private static final Map<String, DataSource> dataSources = new ConcurrentHashMap<>();
+  public static final Map<String, DataSource> dataSources = new ConcurrentHashMap<>();
   private static final Map<Long, Map<String, Connection>> threadConnections = new ConcurrentHashMap<>();
 
   public record XaFunction<T>(Function<Connection, T> function, String jdbcUrl) {
@@ -111,7 +111,7 @@ public class Databases {
     }
   }
 
-  private static DataSource dataSource(String jdbcUrl) {
+  public static DataSource dataSource(String jdbcUrl) {
     return dataSources.computeIfAbsent(
         jdbcUrl,
         key -> {
