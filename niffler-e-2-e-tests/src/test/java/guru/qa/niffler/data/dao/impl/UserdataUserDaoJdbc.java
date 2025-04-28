@@ -1,7 +1,6 @@
 package guru.qa.niffler.data.dao.impl;
 
 import guru.qa.niffler.config.Config;
-import guru.qa.niffler.data.Databases;
 import guru.qa.niffler.data.dao.UserdataUserDao;
 import guru.qa.niffler.data.entity.userdata.UserEntity;
 import guru.qa.niffler.model.CurrencyValues;
@@ -11,12 +10,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public class UserdataUserDaoJdbc implements UserdataUserDao {
 
-  private static final Config CFG = Config.getInstance();
+//  private static final Config CFG = Config.getInstance();
   private final Connection connection;
 
   public UserdataUserDaoJdbc(Connection connection) {
@@ -104,6 +105,32 @@ public class UserdataUserDaoJdbc implements UserdataUserDao {
       throw new RuntimeException(e);
     }
 
+  }
+
+  @Override
+  public List<UserEntity> findAll() {
+    try (PreparedStatement ps = connection.prepareStatement(
+            "SELECT * FROM spend")) {
+      ps.execute();
+      List<UserEntity> result = new ArrayList<>();
+      try (ResultSet rs = ps.getResultSet()) {
+        while (rs.next()) {
+          UserEntity ue = new UserEntity();
+          ue.setId(rs.getObject("id", UUID.class));
+          ue.setUsername(rs.getString("username"));
+          ue.setCurrency(CurrencyValues.valueOf(rs.getString("currency")));
+          ue.setFirstname(rs.getString("firstname"));
+          ue.setSurname(rs.getString("surname"));
+          ue.setFullname(rs.getString("full_name"));
+          ue.setPhoto(rs.getBytes("photo"));
+          ue.setPhotoSmall(rs.getBytes("photo_small"));
+          result.add(ue);
+        }
+      }
+      return result;
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private UserEntity mapResultSetToUserEntity(ResultSet rs) throws SQLException {

@@ -109,4 +109,13 @@ public class CategoryDaoSpringJdbc implements CategoryDao {
       return Optional.empty();
     }
   }
+
+  @Override
+  public List<CategoryEntity> findAll() {
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+    return jdbcTemplate.query(
+            "SELECT * FROM \"category\"",
+            CategoryEntityRowMapper.instance
+    );
+  }
 }
