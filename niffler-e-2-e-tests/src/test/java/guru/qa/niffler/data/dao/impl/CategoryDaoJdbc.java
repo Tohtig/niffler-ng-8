@@ -1,7 +1,6 @@
 package guru.qa.niffler.data.dao.impl;
 
 import guru.qa.niffler.config.Config;
-import guru.qa.niffler.data.Databases;
 import guru.qa.niffler.data.dao.CategoryDao;
 import guru.qa.niffler.data.entity.spend.CategoryEntity;
 
@@ -17,7 +16,7 @@ import java.util.List;
 
 public class CategoryDaoJdbc implements CategoryDao {
 
-  private static final Config CFG = Config.getInstance();
+//  private static final Config CFG = Config.getInstance();
   private final Connection connection;
 
   public CategoryDaoJdbc(Connection connection) {
@@ -139,27 +138,33 @@ public class CategoryDaoJdbc implements CategoryDao {
         throw new RuntimeException("Не удалось обновить категорию с id: " + category.getId());
       }
 
-      return findById(category.getId()).orElseThrow(() ->
+      return findCategoryById(category.getId()).orElseThrow(() ->
               new RuntimeException("Категория не найдена после обновления"));
     } catch (SQLException e) {
       throw new RuntimeException("Ошибка при обновлении категории", e);
     }
   }
 
-  public Optional<CategoryEntity> findById(UUID id) {
+  @Override
+  public List<CategoryEntity> findAll() {
     try (PreparedStatement ps = connection.prepareStatement(
-                 "SELECT * FROM category WHERE id = ?"
-         )) {
-      ps.setObject(1, id);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return Optional.of(mapResultSetToCategoryEntity(rs));
+            "SELECT * FROM category")) {
+      ps.execute();
+      List<CategoryEntity> result = new ArrayList<>();
+      try (ResultSet rs = ps.getResultSet()) {
+        while (rs.next()) {
+          CategoryEntity ce = new CategoryEntity();
+          ce.setId(rs.getObject("id", UUID.class));
+          ce.setUsername(rs.getString("username"));
+          ce.setName(rs.getString("name"));
+          ce.setArchived(rs.getBoolean("archived"));
+          result.add(ce);
         }
       }
+      return result;
     } catch (SQLException e) {
-      throw new RuntimeException("Ошибка при поиске категории по id", e);
+      throw new RuntimeException(e);
     }
-    return Optional.empty();
   }
 
   private CategoryEntity mapResultSetToCategoryEntity(ResultSet rs) throws SQLException {

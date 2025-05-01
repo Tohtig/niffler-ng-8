@@ -30,7 +30,6 @@ public class SpendingTest {
     @Step("Проверка изменения описания траты из таблицы")
     void categoryDescriptionShouldBeChangedFromTable(SpendJson spend) {
         final String newDescription = "Обучение Niffler Next Generation v.1";
-
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .login("duck", "12345")
                 .editSpending(spend.description())
