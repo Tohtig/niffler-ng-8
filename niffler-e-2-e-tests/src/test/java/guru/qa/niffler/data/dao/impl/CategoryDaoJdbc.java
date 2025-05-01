@@ -138,27 +138,11 @@ public class CategoryDaoJdbc implements CategoryDao {
         throw new RuntimeException("Не удалось обновить категорию с id: " + category.getId());
       }
 
-      return findById(category.getId()).orElseThrow(() ->
+      return findCategoryById(category.getId()).orElseThrow(() ->
               new RuntimeException("Категория не найдена после обновления"));
     } catch (SQLException e) {
       throw new RuntimeException("Ошибка при обновлении категории", e);
     }
-  }
-
-  public Optional<CategoryEntity> findById(UUID id) {
-    try (PreparedStatement ps = connection.prepareStatement(
-                 "SELECT * FROM category WHERE id = ?"
-         )) {
-      ps.setObject(1, id);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          return Optional.of(mapResultSetToCategoryEntity(rs));
-        }
-      }
-    } catch (SQLException e) {
-      throw new RuntimeException("Ошибка при поиске категории по id", e);
-    }
-    return Optional.empty();
   }
 
   @Override

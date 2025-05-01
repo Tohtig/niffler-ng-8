@@ -3,6 +3,7 @@ package guru.qa.niffler.data.dao.impl;
 import guru.qa.niffler.data.dao.CategoryDao;
 import guru.qa.niffler.data.entity.spend.CategoryEntity;
 import guru.qa.niffler.data.mapper.CategoryEntityRowMapper;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -44,21 +45,32 @@ public class CategoryDaoSpringJdbc implements CategoryDao {
 
   @Override
   public Optional<CategoryEntity> findCategoryById(UUID id) {
-    return Optional.empty();
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+    try {
+      return Optional.ofNullable(
+              jdbcTemplate.queryForObject(
+                      "SELECT * FROM category WHERE id = ?",
+                      CategoryEntityRowMapper.instance,
+                      id
+              )
+      );
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
+    }
   }
 
   @Override
   public Optional<CategoryEntity> findCategoryByUsernameAndCategoryName(String username, String categoryName) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
     try {
-      return Optional.ofNullable(
+      return Optional.of(
               jdbcTemplate.queryForObject(
                       "SELECT * FROM category WHERE username = ? AND name = ?",
                       CategoryEntityRowMapper.instance,
                       username, categoryName
               )
       );
-    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+    } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
     }
   }
@@ -98,14 +110,14 @@ public class CategoryDaoSpringJdbc implements CategoryDao {
   public Optional<CategoryEntity> findById(UUID id) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
     try {
-      return Optional.ofNullable(
+      return Optional.of(
               jdbcTemplate.queryForObject(
                       "SELECT * FROM category WHERE id = ?",
                       CategoryEntityRowMapper.instance,
                       id
               )
       );
-    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+    } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
     }
   }
@@ -113,9 +125,13 @@ public class CategoryDaoSpringJdbc implements CategoryDao {
   @Override
   public List<CategoryEntity> findAll() {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return jdbcTemplate.query(
-            "SELECT * FROM \"category\"",
-            CategoryEntityRowMapper.instance
-    );
+    try {
+      return jdbcTemplate.query(
+              "SELECT * FROM \"category\"",
+              CategoryEntityRowMapper.instance
+      );
+    } catch (EmptyResultDataAccessException e) {
+      return List.of();
+    }
   }
 }

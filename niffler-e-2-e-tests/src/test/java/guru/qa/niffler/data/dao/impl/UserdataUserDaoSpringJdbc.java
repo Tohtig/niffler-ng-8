@@ -3,6 +3,7 @@ package guru.qa.niffler.data.dao.impl;
 import guru.qa.niffler.data.dao.UserdataUserDao;
 import guru.qa.niffler.data.entity.userdata.UserEntity;
 import guru.qa.niffler.data.mapper.UserdataUserEntityRowMapper;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -50,27 +51,31 @@ public class UserdataUserDaoSpringJdbc implements UserdataUserDao {
   @Override
   public Optional<UserEntity> findById(UUID id) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return Optional.ofNullable(
-            jdbcTemplate.queryForObject(
-                    "SELECT * FROM \"user\" WHERE id = ?",
-                    UserdataUserEntityRowMapper.instance,
-                    id
-            )
-    );
+    try {
+      return Optional.of(
+              jdbcTemplate.queryForObject(
+                      "SELECT * FROM \"user\" WHERE id = ?",
+                      UserdataUserEntityRowMapper.instance,
+                      id
+              )
+      );
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
+    }
   }
 
   @Override
   public Optional<UserEntity> findByUsername(String username) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
     try {
-      return Optional.ofNullable(
+      return Optional.of(
               jdbcTemplate.queryForObject(
                       "SELECT * FROM \"user\" WHERE username = ?",
                       UserdataUserEntityRowMapper.instance,
                       username
               )
       );
-    } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+    } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
     }
   }
@@ -87,9 +92,13 @@ public class UserdataUserDaoSpringJdbc implements UserdataUserDao {
   @Override
   public List<UserEntity> findAll() {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return jdbcTemplate.query(
-            "SELECT * FROM \"user\"",
-            UserdataUserEntityRowMapper.instance
-    );
+    try {
+      return jdbcTemplate.query(
+              "SELECT * FROM \"user\"",
+              UserdataUserEntityRowMapper.instance
+      );
+    } catch (EmptyResultDataAccessException e) {
+      return List.of();
+    }
   }
 }
