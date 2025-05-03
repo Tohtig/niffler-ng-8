@@ -20,7 +20,7 @@ public class SpendingTest {
     @User(
             username = "duck",
             spends = @Spend(
-                            category = "Обучение",
+                            category = "Обучение 1",
                             description = "Обучение Advanced 2.0",
                             amount = 79990,
                             currency = CurrencyValues.RUB
@@ -29,7 +29,7 @@ public class SpendingTest {
     )
     @Step("Проверка изменения описания траты из таблицы")
     void categoryDescriptionShouldBeChangedFromTable(SpendJson spend) {
-        final String newDescription = "Обучение Niffler Next Generation v.1";
+        final String newDescription = "Обучение Niffler Next Generation v.11";
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .login("duck", "12345")
                 .editSpending(spend.description())
