@@ -35,7 +35,7 @@ public record UserJson(
             entity.getFirstname(),
             entity.getSurname(),
             entity.getFullname(),
-            entity.getCurrency(),
+            entity.getCurrency() != null ? CurrencyValues.valueOf(entity.getCurrency().name()) : null,
             entity.getPhoto() != null && entity.getPhoto().length > 0 ? new String(entity.getPhoto(), StandardCharsets.UTF_8) : null,
             entity.getPhotoSmall() != null && entity.getPhotoSmall().length > 0 ? new String(entity.getPhotoSmall(), StandardCharsets.UTF_8) : null,
             friendState

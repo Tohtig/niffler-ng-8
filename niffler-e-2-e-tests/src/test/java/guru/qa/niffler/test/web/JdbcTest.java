@@ -23,13 +23,13 @@ public class JdbcTest {
                     new Date(),
                     new CategoryJson(
                             null,
-                            "cat-name-tx-2",
+                            "cat-name-tx-4",
                             "duck",
                             false
                     ),
                     CurrencyValues.RUB,
                     1000.0,
-                    "spend-name-tx",
+                    "spend-name-tx-1",
                     null
             )
     );
@@ -44,7 +44,7 @@ public class JdbcTest {
     UserJson user = usersDbClient.createUser(
             new UserJson(
                     null,
-                    "valentin-4",
+                    "valentin-5",
                     null,
                     null,
                     null,
@@ -64,7 +64,7 @@ public class JdbcTest {
     UserJson user = usersDbClient.xaCreateUserJdbc(
             new UserJson(
                     null,
-                    "xaCreateUserJdbcTest",
+                    "xaCreateUserJdbcTest1",
                     null,
                     null,
                     null,
@@ -84,7 +84,7 @@ public class JdbcTest {
     UserJson user = usersDbClient.createUserJdbc(
             new UserJson(
                     null,
-                    "createUserJdbcTest",
+                    "createUserJdbcTest1",
                     null,
                     null,
                     null,
@@ -104,7 +104,7 @@ public class JdbcTest {
     UserJson user = usersDbClient.xaCreateUserSpringJdbc(
             new UserJson(
                     null,
-                    "xaCreateUserSpringJdbcTest",
+                    "xaCreateUserSpringJdbcTest1",
                     null,
                     null,
                     null,
@@ -124,7 +124,7 @@ public class JdbcTest {
     UserJson user = usersDbClient.createUserSpringJdbc(
             new UserJson(
                     null,
-                    "createUserSpringJdbcTest",
+                    "createUserSpringJdbcTest1",
                     null,
                     null,
                     null,
@@ -144,7 +144,7 @@ public class JdbcTest {
     UserJson user = usersDbClient.createUserChainedTxManager(
             new UserJson(
                     null,
-                    "createUserChainedTxManagerTest",
+                    "createUserChainedTxManagerTest-1",
                     null,
                     null,
                     null,
